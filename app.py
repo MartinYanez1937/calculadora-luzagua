@@ -1,43 +1,45 @@
-# Pedir totales
-luzyagua = float(input("Ingrese el total de la luz y agua: "))
+import streamlit as st
 
-total_servicios = luzyagua
+st.title("💧 Calculadora Luz y Agua")
 
-personas = []
-total_general = 0
+if "step" not in st.session_state:
+    st.session_state.step = 0
+    st.session_state.total = 0
+    st.session_state.total_general = 0
+    st.session_state.personas = []
 
-cantidad_personas = int(input("¿Cuántas personas ingresará? "))
+# Paso 1
+if st.session_state.step == 0:
+    total = st.text_input("Ingrese el total de luz y agua")
+    if st.button("Continuar"):
+        st.session_state.total = float(total.replace(".", ""))
+        st.session_state.step = 1
 
-for i in range(cantidad_personas):
-    print("\nPersona", i + 1)
-    nombre = input("Nombre: ")
-    
-    veces = int(input("¿Cuántas veces fue en el mes?: "))
-    
-    total_persona = 0
-    
-    for v in range(veces):
-        print(f"  Visita {v + 1}")
-        dias = int(input("    ¿Cuántos días se quedó?: "))
-        personas_visita = int(input("    ¿Con cuántas personas fue?: "))
+# Paso 2
+elif st.session_state.step == 1:
+    cantidad = st.number_input("¿Cuántas personas?", min_value=1, step=1)
+    if st.button("Continuar"):
+        st.session_state.cantidad = int(cantidad)
+        st.session_state.actual = 0
+        st.session_state.step = 2
+
+# Paso 3
+elif st.session_state.step == 2:
+    if st.session_state.actual < st.session_state.cantidad:
+        st.subheader(f"Persona {st.session_state.actual + 1}")
+        nombre = st.text_input("Nombre")
+        dias = st.number_input("Total días x personas", min_value=0, step=1)
         
-        total_persona += dias * personas_visita
-    
-    personas.append((nombre, total_persona))
-    total_general += total_persona
-
-# Evitar división por cero
-if total_general == 0:
-    print("Error: No hay datos para dividir.")
-else:
-    valor_por_unidad = total_servicios / total_general
-
-    print("\n----- RESULTADOS -----")
-
-    for nombre, total_persona in personas:
-        pago = round(total_persona * valor_por_unidad)
+        if st.button("Guardar"):
+            st.session_state.personas.append((nombre, dias))
+            st.session_state.total_general += dias
+            st.session_state.actual += 1
+            st.rerun()
+    else:
+        valor = st.session_state.total / st.session_state.total_general
         
-        # Formato chileno con punto de miles
-        pago_formateado = f"{pago:,}".replace(",", ".")
-        
-        print(f"{nombre} paga {pago_formateado}")
+        st.subheader("Resultados")
+        for nombre, total_persona in st.session_state.personas:
+            pago = round(total_persona * valor)
+            pago_formateado = f"{pago:,}".replace(",", ".")
+            st.write(f"{nombre} paga {pago_formateado}")
